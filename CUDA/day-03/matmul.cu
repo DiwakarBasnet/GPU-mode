@@ -1,8 +1,7 @@
-%%cuda
 // Matrix multiplication of square Matrices of size Width
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <math.h>
 
 
 void printMatrix(float *matrix, int Width) {
