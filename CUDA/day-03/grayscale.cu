@@ -6,9 +6,8 @@
 
 
 void printMatrix(unsigned char *matrix, int width, int height) {
-    printf("\n");
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
             printf("%d ", matrix[i * width + j]);
         }
         printf("\n");
