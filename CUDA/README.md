@@ -21,3 +21,7 @@ Today I learnt about creating kernels for operating on multidimensional arrays.
 - [x] Kernel for converting color of image to grayscale
 - [x] Kernel for image blur effect
 - [x] Square matrix multiplication in CUDA
+
+### Day-04
+Today I continued the exercises listed in chapter 3 of the book, which is related to matirx multiplication.
+- [x] Matrix-vector multiplication
