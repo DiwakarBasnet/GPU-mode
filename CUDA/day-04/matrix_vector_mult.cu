@@ -18,14 +18,12 @@ void printMatrix(float *matrix, int num_rows, int num_cols) {
 __global__ void matVecKernel(
     float *A, float *B, float *C, int dimension
 ) {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int row = blockIdx.x * blockDim.x + threadIdx.x;
 
-    float Avalue = 0;
     if (row < dimension) {
         for(int k = 0; k < dimension; k++) {
-            Avalue += B[row * dimension + k] * C[k];
+            A[row] += B[row * dimension + k] * C[k];
         }
-        A[row] = Avalue;
     }
 }
 
@@ -58,7 +56,7 @@ void matVec(
 
     // Part 2: Call the kernel to launch the grid of threads
     // to perform matrix-vector multiplication
-    dim3 dimGrid(ceil(dimension / 2), ceil(dimension / 2), 1);
+    dim3 dimGrid((dimension + 2 - 1)/2, (dimension + 2 - 1)/2, 1);
     dim3 dimBlock(2, 1, 1);
 
     matVecKernel<<<dimGrid, dimBlock>>>(A_d, B_d, C_d, dimension);
@@ -75,32 +73,37 @@ void matVec(
 
 int main() {
     int dimension = 7;
+    int mat_size = dimension * dimension * sizeof(float);
+    int vec_size = dimension * sizeof(float);
 
     // Allocate host memory for matrix B and vector A and C
     float *A_h = (float *)malloc(vec_size);
     float *B_h = (float *)malloc(mat_size);
     float *C_h = (float *)malloc(vec_size);
-    
+
     // Generate matrix B and vector C
     srand(time(NULL));
-    for (int i = 0; i < dimension * dimension; i++) {
-        B_h[i] = (float)(rand() % 9);    // [0, 9]
+    for (int i = 0; i < dimension; i++) {
+        for (int j = 0; j < dimension; j++) {
+            int offset = i * dimension + j;
+          B_h[offset] = (float)(rand() % 9);    // [0, 9]
+        }
     }
     for (int j = 0; j < dimension; j++) {
         C_h[j] = (float)(rand() % 9);
     }
 
     // Print matrix B and vector C
-    printf("Matrix B\n");
+    printf("\nMatrix B");
     printMatrix(B_h, dimension, dimension);
-    printf("Vector C\n");
+    printf("\nVector C");
     printMatrix(C_h, dimension, 1);
 
     // Initialize kernel
     matVec(A_h, B_h, C_h, dimension);
 
     // Print output vector A
-    printf("Vector A\n");
+    printf("\nVector A");
     printMatrix(A_h, dimension, 1);
 
     // Free host
