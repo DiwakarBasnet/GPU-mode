@@ -26,4 +26,10 @@ Today I learnt about creating kernels for operating on multidimensional arrays.
 Today I continued the exercises listed in chapter 3 of the book, which is related to matirx multiplication.
 - [x] Matrix-vector multiplication
 - [x] Matrix multiplication where each thread calculates a row
-- [x] Matrix multiplication where each thread calculates a column 
+- [x] Matrix multiplication where each thread calculates a column
+
+### Day-05
+Today I read chapter 4 of the book, "*Compute architecture and scheduling*". Which contains theories related to 
+modern architectire of a GPU and warp.
+- [x] synchronization of threads
+= [x] Warp scheduling
