@@ -32,4 +32,5 @@ Today I continued the exercises listed in chapter 3 of the book, which is relate
 Today I read chapter 4 of the book, "*Compute architecture and scheduling*". Which contains theories related to 
 modern architectire of a GPU and warp.
 - [x] synchronization of threads
-= [x] Warp scheduling
+- [x] Warp scheduling
+- [x] Querying CUDA device properties
