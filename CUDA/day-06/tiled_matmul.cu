@@ -13,11 +13,17 @@ __global__ void matrixMulKernel(float *M, float *N, float *P, int Width){
 
     // Loop over the M and N tiles required to compute P element
     float Pvalue = 0;   // Strip-mining (break long loops into phases)
-    for (int ph = 0; ph < Width/TILE_WIDTH; ++ph) {     // Each iteration corresponds to one phase of calculation
+    for (int ph = 0; ph < ceil(Width/(float)TILE_WIDTH); ++ph) {     // Each iteration corresponds to one phase of calculation
 
         // Collaborative loading of M and N tiles into shared memory
-        Mds[ty][tx] = M[Row*Width + ph*TILE_WIDTH + tx];    // each phase uses one tile of M and one tile of N elements
-        Nds[ty][tx] = N[(ph*TILE_WIDTH + ty)*Width + Col];
+        if ((Row < Width) && (ph*TILE_WIDTH + tx) < Width) {
+            Mds[ty][tx] = M[Row*Width + ph*TILE_WIDTH + tx];    // each phase uses one tile of M and one tile of N elements
+        }
+        else Mds[ty][tx] = 0.0f;
+        if ((ph*TILE_WIDTH + ty) < Width && Col < Width) {
+            Nds[ty][tx] = N[(ph*TILE_WIDTH + ty)*Width + Col];
+        }
+        else Nds[ty][tx] = 0.0f;
         __syncthreads();
 
         for (int k = 0; k < TILE_WIDTH; ++k) {
@@ -26,6 +32,8 @@ __global__ void matrixMulKernel(float *M, float *N, float *P, int Width){
         __syncthreads();
 
     }
-    P[Row * Width + Col] = Pvalue;
+    if (Row < Width) && (Col < Width) {
+        P[Row * Width + Col] = Pvalue;
+    }
 
 }
