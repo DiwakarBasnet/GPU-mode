@@ -1,3 +1,4 @@
+%%cuda
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -51,7 +52,7 @@ __global__ void matrixMulKernel(float *M, float *N, float *P, int Width){
         __syncthreads();
 
     }
-    if (Row < Width) && (Col < Width) {
+    if ((Row < Width) && (Col < Width)) {
         P[Row * Width + Col] = Pvalue;
     }
 }
@@ -79,8 +80,8 @@ void matrixMul(float *M_h, float *N_h, float *P_h, int Width) {
     cudaMemcpy(N_d, N_h, size, cudaMemcpyHostToDevice);
 
     // Part 2: Initialize kernel
-    dim3 dimGrid((Width + 32 - 1)/32, (Width + 32 - 1)/32, 1);
-    dim3 dimBlock(32, 32, 1);
+    dim3 dimGrid(ceil(Width/TILE_WIDTH), ceil(Width/TILE_WIDTH), 1);
+    dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
     matrixMulKernel<<<dimGrid, dimBlock>>>(M_d, N_d, P_d, Width);
 
     // Part 3: Capture error if kernel launch fails
@@ -116,17 +117,17 @@ int main() {
     }
 
     // Print matrices M and N
-    printf("Matrix M:\n");
+    printf("\nMatrix M:\n");
     printMatrix(M_h, Width);
 
-    printf("Matrix N:\n");
+    printf("\nMatrix N:\n");
     printMatrix(N_h, Width);
 
     // Matrix multiplication in CUDA
     matrixMul(M_h, N_h, P_h, Width);
 
     // Print matrix multiplication output P
-    printf("Matrix P:\n");
+    printf("\nMatrix P:\n");
     printMatrix(P_h, Width);
 
     // Free host memory
