@@ -30,5 +30,6 @@ modern architectire of a GPU and warp. I learned about thread synchronization in
 - [x] Querying CUDA device properties from host code
 
 ### Day-06
-Today I read chapter 5 of the book, which talks in detail about the memory hierarchy in GPU. I learned about the Streaming Multiprocessors (SM) in CUDA and way to allocate data in shared memory for increased efficiency of GPU by reducing the global memory access. I also learned about tiling for improvement in matrix multiplication.
+Today I read chapter 5 of the book, which talks in detail about the memory hierarchy in GPU. I learned about the Streaming Multiprocessors (SM) in CUDA and way to allocate data in shared memory for increased efficiency of GPU by reducing the global memory access. I also learned about tiling for improvement in matrix multiplication. In tiling matrix multiplication, it utilizes shared memory thus reducing the global memory traffic and increasing effective bandwidth. Compared to naive approach, tiled matrix multiplication improves the performance by more than 60%.
 - [x] Tiled matrix multiplication
+- [x] Dynamic allocation of tile width in tiled matrix multiplication
