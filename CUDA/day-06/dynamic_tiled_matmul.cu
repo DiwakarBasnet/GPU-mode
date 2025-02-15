@@ -12,14 +12,13 @@ void printMatrix(float *matrix, int Width) {
 }
 
 __global__ void dynamicTiledMatrixMulKernel(
-    float *M, float *N, float *P, int Width,
-    int tile_width, unsigned Mds_sz, unsigned Nds_sz
+    float *M, float *N, float *P, int Width, int tile_width
 ) {
     // Single shared memory array
-    extern __shared__ char float Mds_Nds[];
+    extern __shared__ float Mds_Nds[];
 
     float *Mds = (float *) Mds_Nds;
-    float *Nds = (float *) (Mds_Nds + Mds_sz);  // Starts right after Mds
+    float *Nds = (float *) (Mds_Nds + tile_width * tile_width);  // Starts right after Mds
 
     int bx = blockIdx.x; int by = blockIdx.y;
     int tx = threadIdx.x; int ty = threadIdx.y;
@@ -79,9 +78,9 @@ void dynamicTiledMatrixMul(
     // Part 2: Initialize kernel
     dim3 dimGrid((Width + tile_width - 1)/tile_width, (Width + tile_width - 1)/tile_width, 1);
     dim3 dimBlock(tile_width, tile_width, 1);
-    size_t size = 2 * tile_width * tile_width * sizeof(float);
+    size_t shared_mem_size = 2 * tile_width * tile_width * sizeof(float);
 
-    dynamicTiledMatrixMulKernel<<<dimGrid, dimBlock, size>>>(M_d, N_d, P_d, Width, tile_width, size/2, size/2);
+    dynamicTiledMatrixMulKernel<<<dimGrid, dimBlock, shared_mem_size>>>(M_d, N_d, P_d, Width, tile_width);
 
     // Part 3: Capture error if kernel launch fails
     cudaError_t err = cudaGetLastError();
@@ -100,9 +99,9 @@ void dynamicTiledMatrixMul(
 }
 
 int main() {
-    int Width = 64;
+    int Width = 16;
     int size = Width * Width * sizeof(float);
-    int tile_width = 16;
+    int tile_width = 4;
 
     // Allocate memory for host matrices
     float *M_h = (float *)malloc(size);
@@ -111,7 +110,7 @@ int main() {
 
     // Initialize matrices with random values
     srand(time(NULL));
-    for (int i = 0; i < Widht * Width; ++i) {
+    for (int i = 0; i < Width * Width; ++i) {
         M_h[i] = (float)(rand() % 10);  // random values between 0 and 9
         N_h[i] = (float)(rand() % 10);
     }
@@ -124,11 +123,11 @@ int main() {
     printMatrix(N_h, Width);
 
     // Matrix multiplication in CUDA
-    dynamicTiledMatrixMul(M_h, N_h, P_h, Width);
+    dynamicTiledMatrixMul(M_h, N_h, P_h, Width, tile_width);
 
     // Print matrix multiplication output P
     printf("\nMatrix P:\n");
-    printMatrix(P_h, Widht);
+    printMatrix(P_h, Width);
 
     // Free host memory
     free(M_h);
