@@ -80,7 +80,7 @@ void matrixMul(float *M_h, float *N_h, float *P_h, int Width) {
     cudaMemcpy(N_d, N_h, size, cudaMemcpyHostToDevice);
 
     // Part 2: Initialize kernel
-    dim3 dimGrid(ceil(Width/TILE_WIDTH), ceil(Width/TILE_WIDTH), 1);
+    dim3 dimGrid((Width + TILE_WIDTH - 1/TILE_WIDTH), (Width + TILE_WIDTH - 1/TILE_WIDTH), 1);
     dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
     matrixMulKernel<<<dimGrid, dimBlock>>>(M_d, N_d, P_d, Width);
 
