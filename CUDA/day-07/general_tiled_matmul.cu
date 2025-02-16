@@ -1,15 +1,16 @@
-%%cuda
 #include <stdio.h>
 #include <stdlib.h>
-#define TILE_WIDTH 16
+#include <math.h>
+#define TILE_WIDTH 4
 
-void printMatrix(float *matrix, int a, int b) {
-    for(int i = 0; i < a; i++) {
-        for(int j = 0; j < b; j++) {
-            printf("%.2f ", matrix[i * b + j]);
+void printMatrix(float *matrix, int width, int height) {
+    for(int i = 0; i < height; i++) {
+        for(int j = 0; j < width; j++) {
+            printf("%.2f ", matrix[i * width + j]);
         }
         printf("\n");
     }
+    printf("\n\n");
 }
 
 __global__ void generalTiledMatmulKernel(
@@ -26,18 +27,18 @@ __global__ void generalTiledMatmulKernel(
 
     float Pvalue = 0;
     for (int ph = 0; ph < ceil(k/(float)TILE_WIDTH); ++ph) {
-        if ((Row < j) && (ph * TILE_WIDTH + tx) < k) {
-            Mds[ty][tx] = M[Row * j + ph * TILE_WIDTH + tx];
+        if ((Row < j) && ((ph * TILE_WIDTH + tx) < k)) {
+            Mds[ty][tx] = M[Row * k + ph * TILE_WIDTH + tx];
         }
         else Mds[ty][tx] = 0.0f;
-        if ((ph * TILE_WIDTH + ty) < k && (Col < l)) {
+        if (((ph * TILE_WIDTH + ty) < k) && (Col < l)) {
             Nds[ty][tx] = N[(ph * TILE_WIDTH + ty)* l + Col];
         }
         else Nds[ty][tx] = 0.0f;
         __syncthreads();
 
         for (int kp = 0; kp < TILE_WIDTH; ++k) {
-            Pvalue += Mds[ty][k] * Nds[k][tx];
+            Pvalue += Mds[ty][kp] * Nds[kp][tx];
         }
         __syncthreads();
     }
@@ -73,7 +74,7 @@ void generalTiledMatmul(
     cudaMemcpy(N_d, N_h, sizeN, cudaMemcpyHostToDevice);
 
     // Part 2: Initialize kernel
-    dim3 dimGrid((l + TILE_WIDTH - 1/TILE_WIDTH), (k + TILE_WIDTH - 1/TILE_WIDTH), 1);
+    dim3 dimGrid((l + TILE_WIDTH - 1)/TILE_WIDTH, (k + TILE_WIDTH - 1)/TILE_WIDTH, 1);
     dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
     generalTiledMatmulKernel<<<dimGrid, dimBlock>>>(M_d, N_d, P_d, j, k, l);
 
@@ -110,22 +111,22 @@ int main() {
         M_h[i] = (float)(rand() % 10);
     }
     for (int i = 0; i < k * l; i++) {
-        N_h[i] = (float(rand() % 10));
+        N_h[i] = (float)(rand() % 10);
     }
 
     // Print matrices M and N
     printf("\nMatrix M:\n");
-    printMatrix(M_h, j, k);
+    printMatrix(M_h, k, j);
 
     printf("\nMatrix N:\n");
-    printMatrix(N_h, k, l);
+    printMatrix(N_h, l, k);
 
     // Matrix multiplication in CUDA
     generalTiledMatmul(M_h, N_h, P_h, j, k, l);
 
     // Print matrix multiplication output P
     printf("\nMatrix P:\n");
-    printMatrix(P_h, j, l);
+    printMatrix(P_h, l, j);
 
     // Free host memory
     free(M_h);
