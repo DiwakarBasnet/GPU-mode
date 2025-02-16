@@ -22,8 +22,8 @@ __global__ void generalTiledMatmulKernel(
     int bx = blockIdx.x; int by = blockIdx.y;
     int tx = threadIdx.x; int ty = threadIdx.y;
 
-    int Row = by * TILE_WIDTH + tx;
-    int Col = bx * TILE_WIDTH + ty;
+    int Row = by * TILE_WIDTH + ty;
+    int Col = bx * TILE_WIDTH + tx;
 
     float Pvalue = 0;
     for (int ph = 0; ph < ceil(k/(float)TILE_WIDTH); ++ph) {
@@ -37,7 +37,7 @@ __global__ void generalTiledMatmulKernel(
         else Nds[ty][tx] = 0.0f;
         __syncthreads();
 
-        for (int kp = 0; kp < TILE_WIDTH; ++k) {
+        for (int kp = 0; kp < TILE_WIDTH; ++kp) {
             Pvalue += Mds[ty][kp] * Nds[kp][tx];
         }
         __syncthreads();
