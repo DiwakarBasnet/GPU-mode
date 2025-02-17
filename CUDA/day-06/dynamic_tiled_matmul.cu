@@ -11,6 +11,38 @@ void printMatrix(float *matrix, int Width) {
     }
 }
 
+__host__ int calculate_appropriate_SM_usage(cudaDeviceProp devProp) {
+    // 1. Shared memory constraints
+    size_t shared_mem_per_block = devProp.sharedMemPerBlock;
+    // We need 2 tiles of size TILE_WIDTH * TILE_WIDTH
+    size_t max_tile_elements = shared_mem_per_block / (2 * sizeof(float));
+    int tile_size_from_sm = (int)floor(sqrt(max_tile_elements));
+
+    // 2. Thread count constraints
+    int max_threads_per_block = devProp.maxThreadsPerBlock;
+    // Each thread block has TILE_WIDTH * TILE_WIDTH threads
+    int tile_size_from_threads = (int)floor(sqrt(max_threads_per_block));
+
+    // 3. Warp size constraints
+    // The warp size is usually 32 for all NVIDIA GPUs
+    int warp_size = devProp.warpSize;
+
+    int tile_size = min(min(tile_size_from_sm, tile_size_from_threads), warp_size);
+
+    // Ensure the tile_size is a multiple of warp_size
+    tile_size = (tile_size / warp_size) * warp_size;
+
+    // Print the GPU properties and the tile_size.
+    printf("Device name: %s\n", devProp.name);
+    printf("Shared memory per block: %zu bytes\n", shared_mem_per_block);
+    printf("Max threads per block: %d\n", max_threads_per_block);
+    printf("Warp size: %d\n", warp_size);
+    printf("Tile size: %d\n", tile_size);
+    printf("\n");
+
+    return tile_size;
+}
+
 __global__ void dynamicTiledMatrixMulKernel(
     float *M, float *N, float *P, int Width, int tile_width
 ) {
@@ -57,6 +89,10 @@ void dynamicTiledMatrixMul(
     int size = Width * Width * sizeof(float);
     float *M_d, *N_d, *P_d;
 
+    // Determine appropriate tile size
+    cudaDeviceProp devProp;
+    int tile_width = calculate_appropriate_SM_usage(devProp.sharedMemPerBlock);
+
     // Part 1: Allocate device memory for M, N and P
     // Copy M, N from host to device
     cudaError_t err1 = cudaMalloc((void**)&M_d, size);
@@ -78,6 +114,7 @@ void dynamicTiledMatrixMul(
     // Part 2: Initialize kernel
     dim3 dimGrid((Width + tile_width - 1)/tile_width, (Width + tile_width - 1)/tile_width, 1);
     dim3 dimBlock(tile_width, tile_width, 1);
+
     size_t shared_mem_size = 2 * tile_width * tile_width * sizeof(float);
 
     dynamicTiledMatrixMulKernel<<<dimGrid, dimBlock, shared_mem_size>>>(M_d, N_d, P_d, Width, tile_width);
