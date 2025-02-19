@@ -11,29 +11,30 @@ void printMatrix(float *matrix, int Width) {
     }
 }
 
-__host__ int calculate_appropriate_SM_usage(cudaDeviceProp devProp) {
-    // 1. Shared memory constraints
-    size_t shared_mem_per_block = devProp.sharedMemPerBlock;
-    // We need 2 tiles of size TILE_WIDTH * TILE_WIDTH
+__host__ int calculate_appropriate_SM_usage(cudaDeviceProp device_prop) {
+    // 1. Shared memory constraints. 
+    size_t shared_mem_per_block = device_prop.sharedMemPerBlock;
+    // We need 2 tiles of size TILE_SIZE * TILE_SIZE. 
     size_t max_tile_elements = shared_mem_per_block / (2 * sizeof(float));
-    int tile_size_from_sm = (int)floor(sqrt(max_tile_elements));
+    // Calculate the tile size because tile_size * tile_size <= max_tile_elements. 
+    int tile_size_from_shared = (int)floor(sqrt(max_tile_elements));
 
-    // 2. Thread count constraints
-    int max_threads_per_block = devProp.maxThreadsPerBlock;
-    // Each thread block has TILE_WIDTH * TILE_WIDTH threads
+    // 2. Thread count constraints. 
+    int max_threads_per_block = device_prop.maxThreadsPerBlock;
+    // Each thread block has TILE_SIZE * TILE_SIZE threads. 
     int tile_size_from_threads = (int)floor(sqrt(max_threads_per_block));
 
-    // 3. Warp size constraints
-    // The warp size is usually 32 for all NVIDIA GPUs
-    int warp_size = devProp.warpSize;
+    // 3. Warp size constraints.
+    // The warp size is usually 32 for all NVIDIA GPUs.
+    int warp_size = device_prop.warpSize;
 
-    int tile_size = min(min(tile_size_from_sm, tile_size_from_threads), warp_size);
+    int tile_size = min(min(tile_size_from_shared, tile_size_from_threads), warp_size);
 
-    // Ensure the tile_size is a multiple of warp_size
+    // Ensure the tile size is a multiple of the warp size.
     tile_size = (tile_size / warp_size) * warp_size;
 
-    // Print the GPU properties and the tile_size.
-    printf("Device name: %s\n", devProp.name);
+    // Print the GPU properties and the tile size.
+    printf("Device name: %s\n", device_prop.name);
     printf("Shared memory per block: %zu bytes\n", shared_mem_per_block);
     printf("Max threads per block: %d\n", max_threads_per_block);
     printf("Warp size: %d\n", warp_size);
@@ -84,14 +85,15 @@ __global__ void dynamicTiledMatrixMulKernel(
 }
 
 void dynamicTiledMatrixMul(
-    float *M_h, float *N_h, float *P_h, int Width, int tile_width
+    float *M_h, float *N_h, float *P_h, int Width
 ) {
     int size = Width * Width * sizeof(float);
     float *M_d, *N_d, *P_d;
 
     // Determine appropriate tile size
     cudaDeviceProp devProp;
-    int tile_width = calculate_appropriate_SM_usage(devProp.sharedMemPerBlock);
+    cudaGetDeviceProperties(&devProp, 0);   // 0 means first GPU
+    int tile_width = calculate_appropriate_SM_usage(devProp);
 
     // Part 1: Allocate device memory for M, N and P
     // Copy M, N from host to device
@@ -138,7 +140,6 @@ void dynamicTiledMatrixMul(
 int main() {
     int Width = 16;
     int size = Width * Width * sizeof(float);
-    int tile_width = 4;
 
     // Allocate memory for host matrices
     float *M_h = (float *)malloc(size);
@@ -160,7 +161,7 @@ int main() {
     printMatrix(N_h, Width);
 
     // Matrix multiplication in CUDA
-    dynamicTiledMatrixMul(M_h, N_h, P_h, Width, tile_width);
+    dynamicTiledMatrixMul(M_h, N_h, P_h, Width);
 
     // Print matrix multiplication output P
     printf("\nMatrix P:\n");
