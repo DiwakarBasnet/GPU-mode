@@ -7,7 +7,7 @@
 void printMatrix(float *matrix, int width) {
     for(int r = 0; r < width; ++r) {
         for(int c = 0; c < width; ++c) {
-            printf("%.2f ", matrix[r * width + c])''
+            printf("%.2f ", matrix[r * width + c]);
         }
         printf("\n");
     }
@@ -88,7 +88,7 @@ void matrixMul(float *M_h, float *N_h, float *P_h, int width) {
     // Part 3: Capture error if kernel launch fails
     cudaError_t err = cudaGetLastError();
     if(err != cudaSuccess) {
-        printf("CUDA kernel lauch failed: %s\n", cudaGetErrorString(err))''
+        printf("CUDA kernel lauch failed: %s\n", cudaGetErrorString(err));
     }
     cudaDeviceSynchronize();
 
@@ -101,7 +101,7 @@ void matrixMul(float *M_h, float *N_h, float *P_h, int width) {
     cudaFree(P_d);
 }
 
-int maint() {
+int main() {
     int width = 16;
     int size = width * width * sizeof(float);
 
@@ -119,17 +119,17 @@ int maint() {
 
     // Print matrices M and N
     printf("\nMatrix M:\n");
-    printMatirx(M_h, width);
+    printMatrix(M_h, width);
 
     printf("\nMatrix N:\n");
-    printMatirx(N_h, width);
+    printMatrix(N_h, width);
 
     // Matrix multiplication in CUDA
     matrixMul(M_h, N_h, P_h, width);
 
     // Print output matrix P
     printf("\nMatrix P:\n");
-    printMatirx(P_h, width);
+    printMatrix(P_h, width);
 
     // Free host memory
     free(M_h);
