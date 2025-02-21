@@ -37,3 +37,7 @@ Today I read chapter 5 of the book, which talks in detail about the memory hiera
 ### Day-07
 Today I continued with the exercises in chapter 5 of the book and way to implement tiled matrix multiplication for non-square matrices.
 - [x] Tiled matrix multiplication for non-square matrices
+
+### Day-08
+Today I read chapter 6 of the book, which talks about memory coalescing and thread coarsening. I wrote a kernel that multiplies two matrices using coarsening multiple output tiles. I am also continuing the exercises in this chapter.
+- [x] Matrix multiplication with coarsening multiple output tiles
