@@ -41,3 +41,10 @@ Today I continued with the exercises in chapter 5 of the book and way to impleme
 ### Day-08
 Today I read chapter 6 of the book, which talks about memory coalescing and thread coarsening. I wrote a kernel that multiplies two matrices using coarsening multiple output tiles. I am also continuing the exercises in this chapter.
 - [x] Matrix multiplication with coarsening multiple output tiles
+- [x] Matrix multiplication with second matrix stored in column major format
+
+### Day-09
+Today I learned about convolution and the filter kernels used for convolution. I applied basic convolition in 1D array as well as 2D matrix with and without constant memory allocation. Constant memory has smaller memory size compared to global memory and the elements in it remain constant throughout the process.
+- [x] Basic 1D convolution
+- [x] Basic 2D convolution
+- [x] Basic 2D convolution with constant memory allocation for filter matrix
