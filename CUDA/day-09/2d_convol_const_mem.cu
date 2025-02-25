@@ -5,7 +5,7 @@
 #define TILE_WIDTH 8
 #define FILTER_RADIUS 2
 
-__const__ float F[2*FILTER_RADIUS+1][2*FILTER_RADIUS+1];
+__constant__ float F[2*FILTER_RADIUS+1][2*FILTER_RADIUS+1];
 
 void printMatrix(float *matrix, int width, int height) {
     for (int i = 0; i < height; i++) {
