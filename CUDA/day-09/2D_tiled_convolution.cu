@@ -5,8 +5,9 @@
 #define FILTER_RADIUS 2
 #define IN_TILE_DIM 32
 #define OUT_TILE_DIM ((IN_TILE_DIM) - 2*(FILTER_RADIUS))
+#define TILE_WIDTH IN_TILE_DIM
 
-__constant__ float F_c[2*FILTER_RADIUS+1][2*FILTER_RADIUS+1];
+__constant__ float F_c[(2*FILTER_RADIUS+1) * (2*FILTER_RADIUS+1)];
 
 void printMatrix(float *matrix, int width, int height) {
     for (int i = 0; i < height; i++) {
@@ -16,38 +17,6 @@ void printMatrix(float *matrix, int width, int height) {
         printf("\n");
     }
 }
-
-void printFilter(float **filter) {
-    for (int i = 0; i < 2*FILTER_RADIUS+1; i++) {
-        for (int j = 0; j < 2*FILTER_RADIUS+1; j++) {
-            printf("%.2f ", filter[i][j]);
-        }
-        printf("\n");
-    }
-}
-
-// __host__ int calculate_appropriate_SM_usage(cudaDeviceProp device_prop) {
-//     // 1. Shared memory constraints
-//     size_t sm_per_block = device_prop.sharedMemPerBlock;
-//     size_t max_tile_elements = sm_per_block / sizeof(float);
-//     // Tile width according to shared memory constraints
-//     int tile_width_sm = (int)floor(sqrt(max_tile_elements));
-
-//     // 2. Threads per block constraints
-//     size_t max_threads_per_block = device_prop.maxThreadsPerBlock;
-//     // Tile width according to threads per block constraints
-//     int tile_width_threads = (int)floor(sqrt(max_threads_per_block));
-
-//     // 3. Warp size constraints
-//     int warp_size = device_prop.warpSize;
-
-//     // 4. Final tile width
-//     tile_width = min(min(tile_width_sm, tile_width_threads), warp_size);
-//     // Ensure tile width is a multiple of warp size
-//     tile_width = (tile_width / warp_size) * warp_size;
-
-//     return tile_width;
-// }
 
 __global__ void convolution_tiled_2D_const_mem_kernel(
     float *N,   // Input image
@@ -76,7 +45,7 @@ __global__ void convolution_tiled_2D_const_mem_kernel(
             float Pvalue = 0.0f;
             for (int fRow = 0; fRow < 2*FILTER_RADIUS+1; fRow++) {
                 for (int fCol = 0; fCol < 2*FILTER_RADIUS+1; fCol++) {
-                    Pvalue += F_c[fRow][fCol] * N_s[tileRow+fRow][tileCol+fCol];
+                    Pvalue += F_c[fRow * (2*FILTER_RADIUS+1) + fCol] * N_s[tileRow+fRow][tileCol+fCol];
                 }
             }
             P[row * width + col] = Pvalue;
@@ -85,7 +54,7 @@ __global__ void convolution_tiled_2D_const_mem_kernel(
 }
 
 void convolution_tiled_2D_const_mem(
-    float *N_h, float *P_h, float **F_h, int width, int height
+    float *N_h, float *P_h, float *F_h, int width, int height
 ) {
     int size = width * height * sizeof(float);
     int size_f = (2*FILTER_RADIUS+1) * (2*FILTER_RADIUS+1) * sizeof(float);
@@ -105,8 +74,8 @@ void convolution_tiled_2D_const_mem(
     cudaMemcpyToSymbol(F_c, F_h, size_f);
 
     // 2. Initialize cuda kernel
-    dim3 dimGrid((width + IN_TILE_DIM - 1)/IN_TILE_DIM, (height + IN_TILE_DIM -1)/IN_TILE_DIM, 1);
-    dim3 dimBlock(IN_TILE_DIM, IN_TILE_DIM, 1);
+    dim3 dimGrid((width + TILE_WIDTH - 1)/TILE_WIDTH, (height + TILE_WIDTH -1)/TILE_WIDTH, 1);
+    dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
 
     convolution_tiled_2D_const_mem_kernel<<<dimGrid, dimBlock>>>(N_d, P_d, width, height);
 
@@ -125,25 +94,22 @@ void convolution_tiled_2D_const_mem(
 }
 
 int main() {
-    int width = 24;
-    int height = 24;
+    int width = 12;
+    int height = 12;
     int size = width * height * sizeof(float);
+    int size_f = (2*FILTER_RADIUS+1) * (2*FILTER_RADIUS+1) * sizeof(float);
 
     float *N_h = (float*)malloc(size);
     float *P_h = (float*)malloc(size);
-    
-    // Allocate memory for 2d array floating pointer
-    float **F_h = (float**)malloc((2*FILTER_RADIUS+1) * sizeof(float*));
+    float *F_h = (float*)malloc(size_f);
 
     // Randomly initialize the input image
     for (int i = 0; i < width * height; i++) {
-        N_h[i] = (float)(rand() % 256);
+        N_h[i] = (float)(rand() % 10);
     }
     // Randomly initialize the filter matrix
-    for (int i = 0; i < 2*FILTER_RADIUS+1; i++) {
-        for (int j = 0; j< 2*FILTER_RADIUS+1; j++) {
-            F_h[i][j] = (float)(rand() % 10);
-        }
+    for (int i = 0; i < (2*FILTER_RADIUS+1)*(2*FILTER_RADIUS+1); i++) {
+        F_h[i] = (float)(rand() % 4);
     }
 
     // Convolution
@@ -153,7 +119,7 @@ int main() {
     printf("\nMatrix N:\n");
     printMatrix(N_h, width, height);
     printf("\nFilter F:\n");
-    printFilter(F_h);
+    printMatrix(F_h, 2*FILTER_RADIUS+1, 2*FILTER_RADIUS+1);
     printf("\nMatrix P:\n");
     printMatrix(P_h, width, height);
     
