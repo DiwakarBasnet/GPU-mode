@@ -41,7 +41,7 @@ __global__ void conv_2D_cached_kernel(
                     threadIdx.x-FILTER_RADIUS+fCol < TILE_DIM &&
                     threadIdx.y-FILTER_RADIUS+fRow >= 0 &&
                     threadIdx.y-FILTER_RADIUS+fRow < TILE_DIM) {
-                        Pvalue += F_c[fRow][fCol] * N_s[threadIdx.y+fRow][threadIdx.x+fCol];
+                        Pvalue += F_c[fRow][fCol] * N_s[threadIdx.y - FILTER_RADIUS + fRow][threadIdx.x - FILTER_RADIUS + fCol];
                     }
                 else {
                     if (row - FILTER_RADIUS + fRow >= 0 &&
