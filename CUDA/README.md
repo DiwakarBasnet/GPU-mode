@@ -48,3 +48,5 @@ Today I learned about convolution and the filter kernels used for convolution. I
 - [x] Basic 1D convolution
 - [x] Basic 2D convolution
 - [x] Basic 2D convolution with constant memory allocation for filter matrix
+- [x] Tiled 2D convolution
+- [x] Tiled 2D convolution with cach for halo cells
