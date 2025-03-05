@@ -36,10 +36,10 @@ __global__ void scharr_kernel(
 
         for (int f_row = 0; f_row < FILTER_RADIUS; f_row++) {
             for (int f_col = 0; f_col < FILTER_RADIUS; f_col++) {
-                if (threadIdx.x-FILTER_RADIUS+fCol >= 0 &&
-                    threadIdx.x-FILTER_RADIUS+fCol < TILE_DIM &&
-                    threadIdx.y-FILTER_RADIUS+fRow >= 0 &&
-                    threadIdx.y-FILTER_RADIUS+fRow < TILE_DIM) {
+                if ((int)threadIdx.x - FILTER_RADIUS + fCol >= 0 &&
+                    (int)threadIdx.x - FILTER_RADIUS + fCol < TILE_DIM &&
+                    (int)threadIdx.y - FILTER_RADIUS + fRow >= 0 &&
+                    (int)threadIdx.y - FILTER_RADIUS + fRow < TILE_DIM) {
                         sum_x += SCHARR_X[fRow][fCol] * input_tile[threadIdx.y - FILTER_RADIUS + fRow][threadIdx.x - FILTER_RADIUS + fCol];
                         sum_y += SCHARR_Y[fRow][fCol] * input_tile[threadIdx.y - FILTER_RADIUS + fRow][threadIdx.x - FILTER_RADIUS + fCol];
                     }
