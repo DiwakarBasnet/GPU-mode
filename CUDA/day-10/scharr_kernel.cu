@@ -34,8 +34,8 @@ __global__ void scharr_kernel(
         float sum_x = 0.0f;
         float sum_y = 0.0f;
 
-        for (int f_row = 0; f_row < FILTER_RADIUS; f_row++) {
-            for (int f_col = 0; f_col < FILTER_RADIUS; f_col++) {
+        for (int fRow = 0; fRow < FILTER_RADIUS; fRow++) {
+            for (int fCol = 0; fCol < FILTER_RADIUS; fCol++) {
                 if ((int)threadIdx.x - FILTER_RADIUS + fCol >= 0 &&
                     (int)threadIdx.x - FILTER_RADIUS + fCol < TILE_DIM &&
                     (int)threadIdx.y - FILTER_RADIUS + fRow >= 0 &&
