@@ -11,14 +11,13 @@ __global__ void online_softmax_kernel(
 ) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     
-    // Calculate the maximum value
     if (idx < n) {
         // 1. Compute max and sum of exp(x[idx] - max_val)
         float max_val = -INFINITY;
         float sum = 0.0f;
 
         for (int i = 0; i < n; i++) {
-            int cur_val = a[idx + i];
+            float cur_val = a[idx + i];
             float max_cur = fmaxf(cur_val, max_val);
             float sum_cur = sum * expf(max_val - max_cur) + expf(cur_val - max_cur);
             max_val = max_cur;
