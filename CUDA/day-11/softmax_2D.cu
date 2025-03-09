@@ -18,7 +18,7 @@ void print_matrix(float *matrix, int height, int width) {
 __global__ void online_2d_softmax_kernel(
     float *A, float *B, int height, int width
 ) {
-    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int row = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (row < height) {
         float max = A[row * width];
@@ -58,8 +58,8 @@ void online_2d_softmax(
     cudaMemcpy(A_d, A_h, size, cudaMemcpyHostToDevice);
     
     // 2. Launch the cuda kernel
-    dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
-    dim3 dimGrid((height + TILE_WIDTH - 1)/TILE_WIDTH, (width + TILE_WIDTH - 1)/TILE_WIDTH, 1);
+    dim3 dimBlock(TILE_WIDTH, 1, 1);
+    dim3 dimGrid((height + TILE_WIDTH - 1)/TILE_WIDTH, 1, 1);
     online_2d_softmax_kernel<<<dimGrid, dimBlock>>>(A_d, B_d, height, width);
 
     // 3. Check for kernel launch errors
