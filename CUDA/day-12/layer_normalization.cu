@@ -9,18 +9,25 @@ __global__ void layer_normalization_kernel(
 ) {
     int row = blockIdx.x * blockDim.x + threadIdx.x;
     if (row < height) {
+
+        // Compute mean
         float sum = 0.0f;
         for (int col =0; col < width; col++) {
             sum += A[row * width + col];
         }
         mean[row] = sum / width;
+
+        // Copmute variance
         sum = 0.0f;
         for (int col = 0; col < width; col++) {
             sum += (A[row * width + col] - mean[row]) * (A[row * width + col] - mean[row]);
         }
         variance[row] = sum / width;
+
+        // Normalize
+        stddev = sqrtf(variance[row] + 1e-6);
         for (int col = 0; col < width; col++) {
-            B[row * width + col] = gamma * ((A[row * width + col] - mean[row]) / sqrtf(variance[row] + 1e-6)) + beta;
+            B[row * width + col] = gamma * ((A[row * width + col] - mean[row]) / stddev) + beta;
         }
     }
 }
