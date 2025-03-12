@@ -3,41 +3,54 @@
 
 #define gamma 1.0f
 #define beta 0.0f
+#define epsilon 1e-6
 
 __global__ void layer_normalization_kernel(
-    float *A, float *B, float *mean, float *variance, int width, int height
+    float *A, float *B, int batch_size, int seq_len, int embed_dim
 ) {
-    int row = blockIdx.x * blockDim.x + threadIdx.x;
-    if (row < height) {
+    int batch_idx = blockIdx.x;
+    int seq_idx = blockIdx.y;
+    int embed_idx = threadIdx.x;
 
-        // Compute mean
+    __shared__ float s_mean;
+    __shared__ float s_var;
+
+    if (threadIdx.x == 0) {
+
+        // Compute mean across the embedding dimension
         float sum = 0.0f;
-        for (int col =0; col < width; col++) {
-            sum += A[row * width + col];
+        for (int i = 0; i < embed_dim; i++) {
+            int idx = batch_idx * seq_len * embed_dim + seq_idx * embed_dim + i;
+            sum += A[idx];
         }
-        mean[row] = sum / width;
+        s_mean = sum / embed_dim;
 
-        // Copmute variance
+        // Copmute variance across the embedding dimension
         sum = 0.0f;
-        for (int col = 0; col < width; col++) {
-            sum += (A[row * width + col] - mean[row]) * (A[row * width + col] - mean[row]);
+        for (int i = 0; i < embed_dim; i++) {
+            int idx = batch_idx * seq_len * embed_dim + seq_idx * embed_dim + i;
+            float diff = x[idx] - s_mean;
+            sum += diff * diff;
         }
-        variance[row] = sum / width;
+        s_var = sum / embed_dim;
 
-        // Normalize
-        stddev = sqrtf(variance[row] + 1e-6);
-        for (int col = 0; col < width; col++) {
-            B[row * width + col] = gamma * ((A[row * width + col] - mean[row]) / stddev) + beta;
+        __syncthreads();
+
+        if (embed_idx < embed_dim) {
+            // Normalization
+            int idx = batch_idx * seq_len * embed_dim + seq_idx * embed_dim + embed_idx;
+            float normalized = (A[idx] - s_mean) / sqrtf(s_var + epsilon);
+            B[idx] = gamma * normalized + beta;
         }
     }
 }
 
 void cudaLayerNorm(
-    float *input, float *output, float *mean, float *variance, int width, int height
+    float *input, float *output, int batch_size, int seq_len, int embed_dim
 ) {
-    const dim3 blockSize(256);
-    const dim3 gridSize((height + blockSize.x - 1) / blockSize.x);
+    const dim3 blockDim(embed_dim, 1, 1);
+    const dim3 gridDim(batch_size, seq_len, 1);
 
-    layer_normalization_kernel<<<gridSize, blockSize>>>(input, output, mean, variance, width, height);
+    layer_normalization_kernel<<<gridDim, blockDim>>>(input, output, batch_size, seq_len, embed_dim);
     cudaDeviceSynchronize();
 }
