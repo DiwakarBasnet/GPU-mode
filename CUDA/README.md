@@ -50,3 +50,19 @@ Today I learned about convolution and the filter kernels used for convolution. I
 - [x] Basic 2D convolution with constant memory allocation for filter matrix
 - [x] Tiled 2D convolution
 - [x] Tiled 2D convolution with cach for halo cells
+
+### Day-10
+Today I worked on integrating the Scharr filter implemented in CUDA to PyTorch framework using C++ binding. To build CUDA extension in PyTorch, we do:
+```
+cd day-10
+pip install -e .
+python scharr_kernel_test.py
+```
+
+### Day-11
+- [x] Softmax kernel for 1D and 2D array
+- [x] Softmax kernel test in python using C++ binding
+
+### Day-12
+- [x] Layer normalization using shared memory
+- [x] Comparing CUDA implementation with PyTorch 
