@@ -1,13 +1,14 @@
 #include <torch/extension.h>
 
-void cudaLayerNormalization(
+void cudaLayerNorm(
     float *input, 
     float *output, 
     int batch_size, 
     int seq_len, 
-    int embed_dim
+    int embed_dim,
+    float eps
 );
-torch::Tensor layerNorm(torch::Tensor input) {
+torch::Tensor layerNorm(torch::Tensor input, float eps) {
     const int batch_size = input.size(0);
     const int seq_len = input.size(1);
     const int embed_dim = input.size(2);
@@ -19,7 +20,8 @@ torch::Tensor layerNorm(torch::Tensor input) {
         output.data_ptr<float>(),
         batch_size,
         seq_len,
-        embed_dim
+        embed_dim,
+        eps
     );
     
     return output;

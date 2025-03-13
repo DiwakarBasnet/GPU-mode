@@ -3,10 +3,9 @@
 
 #define gamma 1.0f
 #define beta 0.0f
-#define epsilon 1e-6
 
 __global__ void layer_normalization_kernel(
-    float *A, float *B, int batch_size, int seq_len, int embed_dim
+    float *A, float *B, int batch_size, int seq_len, int embed_dim, float eps
 ) {
     int batch_idx = blockIdx.x;
     int seq_idx = blockIdx.y;
@@ -40,17 +39,17 @@ __global__ void layer_normalization_kernel(
     if (embed_idx < embed_dim) {
         // Normalization
         int idx = batch_idx * seq_len * embed_dim + seq_idx * embed_dim + embed_idx;
-        float normalized = (A[idx] - s_mean) / sqrtf(s_var + epsilon);
+        float normalized = (A[idx] - s_mean) / sqrtf(s_var + eps);
         B[idx] = gamma * normalized + beta;
     }
 }
 
 void cudaLayerNorm(
-    float *input, float *output, int batch_size, int seq_len, int embed_dim
+    float *input, float *output, int batch_size, int seq_len, int embed_dim, float eps
 ) {
     const dim3 blockDim(embed_dim, 1, 1);
     const dim3 gridDim(batch_size, seq_len, 1);
 
-    layer_normalization_kernel<<<gridDim, blockDim>>>(input, output, batch_size, seq_len, embed_dim);
+    layer_normalization_kernel<<<gridDim, blockDim>>>(input, output, batch_size, seq_len, embed_dim, eps);
     cudaDeviceSynchronize();
 }
