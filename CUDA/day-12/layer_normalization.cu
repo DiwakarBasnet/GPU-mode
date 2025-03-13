@@ -29,19 +29,19 @@ __global__ void layer_normalization_kernel(
         sum = 0.0f;
         for (int i = 0; i < embed_dim; i++) {
             int idx = batch_idx * seq_len * embed_dim + seq_idx * embed_dim + i;
-            float diff = x[idx] - s_mean;
+            float diff = A[idx] - s_mean;
             sum += diff * diff;
         }
         s_var = sum / embed_dim;
+    }
+    
+    __syncthreads();
 
-        __syncthreads();
-
-        if (embed_idx < embed_dim) {
-            // Normalization
-            int idx = batch_idx * seq_len * embed_dim + seq_idx * embed_dim + embed_idx;
-            float normalized = (A[idx] - s_mean) / sqrtf(s_var + epsilon);
-            B[idx] = gamma * normalized + beta;
-        }
+    if (embed_idx < embed_dim) {
+        // Normalization
+        int idx = batch_idx * seq_len * embed_dim + seq_idx * embed_dim + embed_idx;
+        float normalized = (A[idx] - s_mean) / sqrtf(s_var + epsilon);
+        B[idx] = gamma * normalized + beta;
     }
 }
 
