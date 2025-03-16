@@ -3,6 +3,14 @@
 #include <math.h>
 #define TILE_WIDTH 8
 
+#define c0 0.02f
+#define c1 0.52f
+#define c2 0.25f
+#define c3 0.12f
+#define c4 0.89f
+#define c5 0.37f
+#define c6 0.93f
+
 // Basic stencil sweep kernel
 __global__ void stencil_kernel(float *in, float *out, unsigned int N) {
     unsigned int i = blockIdx.z * blockDim.z + threadIdx.z;
@@ -66,7 +74,7 @@ void printStencil(float *stencil, int N) {
 
 int main() {
     int N = 16;
-    float size = N * N * sizeof(float);
+    int size = N * N * N * sizeof(float);
 
     float *in_h = (float *)malloc(size);
     float *out_h = (float *)malloc(size);
