@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <cuda_runtime.h>
 
-#define IN_TILE_WIDTH 16
-#define OUT_TILE_WIDTH 12
+#define IN_TILE_WIDTH 8
+#define OUT_TILE_WIDTH 6
 
 #define c0 0.02f
 #define c1 0.52f
@@ -63,7 +62,7 @@ void stencil_sweep(float *in_h, float *out_h, unsigned int N) {
     cudaMemcpy(in_d, in_h, size, cudaMemcpyHostToDevice);
 
     // Lauch stencil kernel
-    dim3 dimGrid((N + IN_TILE_WIDTH - 1)/IN_TILE_WIDTH, (N + IN_TILE_WIDTH - 1)/IN_TILE_WIDTH, (N + IN_TILE_WIDTH - 1)/IN_TILE_WIDTH);
+    dim3 dimGrid((N + OUT_TILE_WIDTH - 1)/OUT_TILE_WIDTH, (N + OUT_TILE_WIDTH - 1)/OUT_TILE_WIDTH, (N + OUT_TILE_WIDTH - 1)/OUT_TILE_WIDTH);
     dim3 dimBlock(IN_TILE_WIDTH, IN_TILE_WIDTH, IN_TILE_WIDTH);
 
     stencil_sweep_kernel<<<dimGrid, dimBlock>>>(in_d, out_d, N);
@@ -89,7 +88,7 @@ void printStencil(float *stencil, int N) {
             }
             printf("\n");
         }
-        printf("##############################################");
+        printf("\n---------------------------------------------\n");
     }
 }
 

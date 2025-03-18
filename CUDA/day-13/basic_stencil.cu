@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+
 #define TILE_WIDTH 8
 
 #define c0 0.02f
@@ -25,8 +26,8 @@ __global__ void stencil_kernel(float *in, float *out, unsigned int N) {
     }
 }
 
-void stencil_kernel(float *in_h, float *out_h, unsigned int N) {
-    float size = N * N * sizeof(float);
+void stencil_sweep(float *in_h, float *out_h, unsigned int N) {
+    int size = N * N * N * sizeof(float);
     float *in_d, *out_d;
 
     // Allocate memory in device
@@ -68,12 +69,12 @@ void printStencil(float *stencil, int N) {
             }
             printf("\n");
         }
-        prinf("#################################################")
+        printf("\n----------------------------------------------\n");
     }
 }
 
 int main() {
-    int N = 16;
+    int N = 8;
     int size = N * N * N * sizeof(float);
 
     float *in_h = (float *)malloc(size);
@@ -81,13 +82,13 @@ int main() {
 
     // Initialization
     for (int i = 0; i < N*N*N; i++) {
-        in_h[i] = (float)(rand() % 5);
+        in_h[i] = (float)(rand() % 8);
     }
 
     printf("\nOrignial Input:\n");
     printStencil(in_h, N);
 
-    stencil_kernel(in_h, out_h, N);
+    stencil_sweep(in_h, out_h, N);
 
     printf("\nOutput stencil\n");
     printStencil(out_h, N);
