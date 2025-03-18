@@ -1,16 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define OUT_TILE_DIM 16
-#define IN_TILE_DIM 8
+#define OUT_TILE_DIM 30
+#define IN_TILE_DIM 32
 
-#define c0 0.02f
-#define c1 0.52f
-#define c2 0.25f
-#define c3 0.12f
-#define c4 0.89f
-#define c5 0.37f
-#define c6 0.93f
+__constant__ float c0; 
+__constant__ float c1; 
+__constant__ float c2; 
+__constant__ float c3; 
+__constant__ float c4; 
+__constant__ float c5; 
+__constant__ float c6;
 
 __global__ void stencil_kernel(float *in, float *out, unsigned int N) {
     int iStart = blockIdx.z * OUT_TILE_DIM;
@@ -55,6 +55,14 @@ void stencil_sweep(float *in_h, float *out_h, unsigned int N) {
 
     float *in_d, *out_d;
 
+    float h_c0 = 0.02f;
+    float h_c1 = 0.52f;
+    float h_c2 = 0.25f;
+    float h_c3 = 0.12f;
+    float h_c4 = 0.89f;
+    float h_c5 = 0.37f;
+    float h_c6 = 0.93f;
+
     // Device memory allocation
     cudaError_t err1 = cudaMalloc((void**)&in_d, size);
     if (err1 != cudaSuccess) {
@@ -67,9 +75,18 @@ void stencil_sweep(float *in_h, float *out_h, unsigned int N) {
 
     cudaMemcpy(in_d, in_h, size, cudaMemcpyHostToDevice);
 
+    // Constant memory allocation
+    cudaMemcpyToSymbol(c0, &h_c0, sizeof(float));
+    cudaMemcpyToSymbol(c1, &h_c1, sizeof(float));
+    cudaMemcpyToSymbol(c2, &h_c2, sizeof(float));
+    cudaMemcpyToSymbol(c3, &h_c3, sizeof(float));
+    cudaMemcpyToSymbol(c4, &h_c4, sizeof(float));
+    cudaMemcpyToSymbol(c5, &h_c5, sizeof(float));
+    cudaMemcpyToSymbol(c6, &h_c6, sizeof(float));
+
     // Launch stencil kernel
-    dim3 dimGrid((N + IN_TILE_DIM - 1)/IN_TILE_DIM, (N + IN_TILE_DIM - 1)/IN_TILE_DIM, (N + IN_TILE_DIM - 1)/IN_TILE_DIM);
-    dim3 dimBlock(IN_TILE_DIM, IN_TILE_DIM, IN_TILE_DIM);
+    dim3 dimBlock(IN_TILE_DIM, IN_TILE_DIM, 1);
+    dim3 dimGrid((N + OUT_TILE_DIM - 1)/OUT_TILE_DIM, (N + OUT_TILE_DIM - 1)/OUT_TILE_DIM, (N + OUT_TILE_DIM - 1)/OUT_TILE_DIM);
 
     stencil_kernel<<<dimGrid, dimBlock>>>(in_d, out_d, N);
 
