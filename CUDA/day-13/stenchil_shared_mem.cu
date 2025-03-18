@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 
-#define IN_TILE_WIDTH 8
-#define OUT_TILE_WIDTH 16
+#define IN_TILE_WIDTH 16
+#define OUT_TILE_WIDTH 12
 
 #define c0 0.02f
 #define c1 0.52f
