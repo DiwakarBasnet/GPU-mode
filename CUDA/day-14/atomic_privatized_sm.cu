@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 
-#define NUM_BINS 3
+#define NUM_BINS 7
 
 __global__ void histo_private_kernel(char *data, unsigned int length, unsigned int *histo) {
     // Initialize privatized bins
@@ -29,7 +29,7 @@ __global__ void histo_private_kernel(char *data, unsigned int length, unsigned i
     }
 }
 
-void histo_private(char *data_h, unsigned int length, unsigned int *histo) {
+void histo_private(char *data_h, unsigned int length, unsigned int *histo_h) {
     int size_data = length * sizeof(char);
     int size_histo = 7 * sizeof(unsigned int);
 
@@ -67,7 +67,7 @@ void histo_private(char *data_h, unsigned int length, unsigned int *histo) {
     cudaFree(data_d);
 }
 
-nt main() {
+int main() {
     // Example input string (should be lowercase letters for this example)
     char data[] = "this is an example of a cuda histogram computation";
     unsigned int length = strlen(data);
@@ -75,11 +75,11 @@ nt main() {
     unsigned int histo_host[7] = {0};
 
     // Compute histogram on the GPU
-    histo(data, length, histo_host);
+    histo_private(data, length, histo_host);
 
     // Print the histogram
     for (int i = 0; i < 7; i++) {
-        printf("%c: %u\n", 'a' + i, histo_host[i]);
+        printf("b%d: %u\n", i, histo_host[i]);
     }
 
     return 0;

@@ -28,14 +28,14 @@ void histo(char *data_h, unsigned int length, unsigned int *histo_h) {
         exit(EXIT_FAILURE);
     }
 
-    err2 = cudaMalloc((void**)&histo_d, histo_size);
+    cudaError_t err2 = cudaMalloc((void**)&histo_d, histo_size);
     if (err2 != cudaSuccess) {
         printf("%s in %s at %d\n", cudaGetErrorString(err2), __FILE__, __LINE__);
         exit(EXIT_FAILURE);
     }
 
     // Initialize device histogram to zero
-    err3 = cudaMemset(histo_d, 0, histo_size);
+    cudaError_t err3 = cudaMemset(histo_d, 0, histo_size);
     if (err3 != cudaSuccess) {
         printf("%s in %s at %d\n", cudaGetErrorString(err3), __FILE__, __LINE__);
         exit(EXIT_FAILURE);
@@ -51,7 +51,7 @@ void histo(char *data_h, unsigned int length, unsigned int *histo_h) {
     histo_kernel<<<dimGrid, dimBlock>>>(data_d, length, histo_d);
 
     // Check for errors after kernel launch
-    err = cudaGetLastError();
+    cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess) {
         printf("%s in %s at %d\n", cudaGetErrorString(err), __FILE__, __LINE__);
         exit(EXIT_FAILURE);
@@ -78,7 +78,7 @@ int main() {
 
     // Print the histogram
     for (int i = 0; i < 7; i++) {
-        printf("%c: %u\n", 'a' + i, histo_host[i]);
+        printf("b%d: %u\n", i, histo_host[i]);
     }
 
     return 0;

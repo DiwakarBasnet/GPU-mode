@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 
-#define NUM_BINS 3;
+#define NUM_BINS 7
 
 __global__ void histo_private_kernel(char *data, unsigned int length, unsigned int *histo) {
     unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -69,11 +69,11 @@ int main() {
     unsigned int histo_host[7] = {0};
 
     // Compute histogram on the GPU
-    histo(data, length, histo_host);
+    histo_private(data, length, histo_host);
 
     // Print the histogram
     for (int i = 0; i < 7; i++) {
-        printf("%c: %u\n", 'a' + i, histo_host[i]);
+        printf("b%d: %u\n", i, histo_host[i]);
     }
 
     return 0;
