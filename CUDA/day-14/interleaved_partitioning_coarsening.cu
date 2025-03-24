@@ -3,9 +3,8 @@
 #include <cuda_runtime.h>
 
 #define NUM_BINS 7
-#define CFACTOR  3
 
-__global__ void histo_private_kernel(char *data, unsigned int length, unsigned int *histo) {
+__global__ void histo_private_kernel(char *data, int length, unsigned int *histo) {
     // Initialize privatized bins
     __shared__ unsigned int histo_s[NUM_BINS];
     for (unsigned int bin = threadIdx.x; bin < NUM_BINS; bin += blockDim.x) {
@@ -14,9 +13,9 @@ __global__ void histo_private_kernel(char *data, unsigned int length, unsigned i
     __syncthreads();
     // Histogram
     unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    for (unsigned int i = tid * CFACTOR; i < min((tid+1)*CFACTOR, length); ++i) {
+    for (unsigned int i = tid; i < length; i += blockDim.x * gridDim.x) {
         int alphabet_position = data[i] - 'a';
-        if(alphabet_position >= 0 && alphabet_position < 26) {
+        if (alphabet_position >= 0 && alphabet_position < 26) {
             atomicAdd(&(histo_s[alphabet_position/4]), 1);
         }
     }
@@ -30,7 +29,7 @@ __global__ void histo_private_kernel(char *data, unsigned int length, unsigned i
     }
 }
 
-void histo_private(char *data_h, unsigned int length, unsigned int *histo_h) {
+void histo_private(char *data_h, int length, unsigned int *histo_h) {
     int size_data = length * sizeof(char);
     int size_histo = NUM_BINS * sizeof(unsigned int);
 
@@ -49,19 +48,19 @@ void histo_private(char *data_h, unsigned int length, unsigned int *histo_h) {
 
     cudaMemcpy(data_d, data_h, size_data, cudaMemcpyHostToDevice);
 
-    // Kernel execution
+    // Kernel launch
     dim3 dimBlock(8);
     dim3 dimGrid((length + dimBlock.x - 1)/dimBlock.x);
 
     histo_private_kernel<<<dimGrid, dimBlock>>>(data_d, length, histo_d);
 
-    // Check if kernel executed successfully
-    cudaError_t err = cudaGetLastError();
-    if (err != cudaSuccess) {
-        printf("%s in %s at line %d", cudaGetErrorString(err), __FILE__, __LINE__);
+    // Check for kernel launch errors
+    cudaError_t err3 = cudaGetLastError();
+    if (err3 != cudaSuccess) {
+        printf("%s in %s at line %d", cudaGetErrorString(err3), __FILE__, __LINE__);
     }
 
-    // Copy result from device to host
+    // Copy results from device to host
     cudaMemcpy(histo_h, histo_d, size_histo, cudaMemcpyDeviceToHost);
 
     cudaFree(histo_d);
