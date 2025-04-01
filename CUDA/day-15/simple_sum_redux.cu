@@ -22,7 +22,7 @@ void SimpleSumReduction(float *input_h, float *output_h, int N) {
 
     // Allocate device memory
     cudaError_t err1 = cudaMalloc((void**)&input_d, size);
-    if (err1 != cudaSucces) {
+    if (err1 != cudaSuccess) {
         printf("%s in %s at line %d", cudaGetErrorString(err1), __FILE__, __LINE__);
     }
     cudaError_t err2 = cudaMalloc((void**)&output_d, sizeof(float));
@@ -30,7 +30,7 @@ void SimpleSumReduction(float *input_h, float *output_h, int N) {
         printf("%s in %s at line %d", cudaGetErrorString(err2), __FILE__, __LINE__);
     }
 
-    cudaMemcpy(input_d, inptu_h, size, cudaMemcpyHostToDevice);
+    cudaMemcpy(input_d, input_h, size, cudaMemcpyHostToDevice);
 
     // Launch kernel
     dim3 dimBlock(N / 2);
@@ -48,23 +48,18 @@ void SimpleSumReduction(float *input_h, float *output_h, int N) {
     cudaMemcpy(output_h, output_d, sizeof(float), cudaMemcpyDeviceToHost);
 
     cudaFree(input_d);
-    cduaFree(output_d);
+    cudaFree(output_d);
 }
 
 int main() {
     int N = 20;
-    int size = N * sizeof(flaot);
+    int size = N * sizeof(float);
 
     float *input_h = (float *)malloc(size);
     float *output_h = (float *)malloc(sizeof(float));
 
     for (int i = 0; i < N; i ++) {
-        input_h[i] = (float)(rand() % 10);
-    }
-
-    printf("Input array: ");
-    for (int i = 0; i < N; i++) {
-        printf("%f ", input_h[i]):
+        input_h[i] = i + 1;
     }
 
     SimpleSumReduction(input_h, output_h, N);

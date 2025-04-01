@@ -20,7 +20,7 @@ void ConvergentSumReduction(float *input_h, float *output_h, int N) {
     float *input_d, *output_d;
 
     // Allocate device memory
-    cudaError_t err1 = cudaMlloc((void**)&input_d, size);
+    cudaError_t err1 = cudaMalloc((void**)&input_d, size);
     if (err1 != cudaSuccess) {
         printf("%s in %s at line %d\n", cudaGetErrorString(err1), __FILE__, __LINE__);
     }
@@ -56,15 +56,10 @@ int main() {
     float *output_h = (float *)malloc(sizeof(float));
 
     for (int i = 0; i < N; i++) {
-        input_h[i] = (float)(rand() % 100);
+        input_h[i] = i + 1;
     }
 
-    printf("Input array: ");
-    for (int i = 0; i < N; i++) {
-        printf("%f ", input_h[i]):
-    }
-
-    SimpleSumReduction(input_h, output_h, N);
+    ConvergentSumReduction(input_h, output_h, N);
 
     printf("\nSum: %f\n", *output_h);
 

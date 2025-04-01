@@ -1,4 +1,4 @@
-#include <stdio.h>
+%%#include <stdio.h>
 #include <stdlib.h>
 #include <cuda_runtime.h>
 
@@ -44,13 +44,13 @@ void SegmentedSumReduction(float *input_h, float *output_h, int N) {
     SegmentedSumReductionKernel<<<dimGrid, dimBlock>>>(input_d, output_d);
 
     // Check for kernel launch errors
-    cudaError_t err3 = cduaGetLastError();
+    cudaError_t err3 = cudaGetLastError();
     if (err3 != cudaSuccess) {
         printf("%s in %s at line %d\n", cudaGetErrorString(err3), __FILE__, __LINE__);
     }
 
     // Copy result back to host
-    cudaMemcpy(output_h, output_d, sizeof(flaot), cudaMemcpyDeviceToHost);
+    cudaMemcpy(output_h, output_d, sizeof(float), cudaMemcpyDeviceToHost);
 
     cudaFree(input_d);
     cudaFree(output_d);
@@ -72,4 +72,3 @@ int main() {
     free(output_h);
     return 0;
 }
-

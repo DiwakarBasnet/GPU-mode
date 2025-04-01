@@ -9,7 +9,7 @@ __global__ void SharedMemorySumReductionKernel(float *input, float *output) {
     __shared__ float input_shared[BLOCK_SIZE];
     input_shared[t] = input[t] + input[t + BLOCK_SIZE];
     for (unsigned int stride = BLOCK_SIZE / 2; stride >= 1; stride /= 2) {
-        __syncthread();
+        __syncthreads();
         if (threadIdx.x < stride) {
             input_shared[t] += input_shared[t + stride];
         }
@@ -63,7 +63,7 @@ int main() {
 
     // Initialize input array
     for (int i = 0; i < N; i++) {
-        input_h[i] = (float)(rand() % 100);
+        input_h[i] = i + 1;
     }
 
     // Perform reduction
