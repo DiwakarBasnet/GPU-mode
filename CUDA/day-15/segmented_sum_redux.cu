@@ -1,8 +1,8 @@
-%%#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <cuda_runtime.h>
 
-#define BLOCK_DIM 256
+#define BLOCK_DIM 32
 
 __global__ void SegmentedSumReductionKernel(float *input, float *output) {
     __shared__ float input_s[BLOCK_DIM];
@@ -41,7 +41,20 @@ void SegmentedSumReduction(float *input_h, float *output_h, int N) {
     dim3 dimBlock(BLOCK_DIM);
     dim3 dimGrid((N + BLOCK_DIM - 1)/BLOCK_DIM);
 
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
+
     SegmentedSumReductionKernel<<<dimGrid, dimBlock>>>(input_d, output_d);
+
+    cudaDeviceSynchronize();
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    printf("Time taken: %f ms\n", milliseconds);
 
     // Check for kernel launch errors
     cudaError_t err3 = cudaGetLastError();
@@ -57,7 +70,7 @@ void SegmentedSumReduction(float *input_h, float *output_h, int N) {
 }
 
 int main() {
-    int N = 1024;
+    int N = 128;
     float *input_h = (float *)malloc(N * sizeof(float));
     float *output_h = (float *)malloc(sizeof(float));
 

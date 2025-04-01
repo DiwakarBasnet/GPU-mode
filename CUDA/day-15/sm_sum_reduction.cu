@@ -39,7 +39,20 @@ void SharedMemorySumReduction(float *input_h, float *output_h, int N) {
     dim3 dimBlock(BLOCK_SIZE);
     dim3 dimGrid(1);
 
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start);
+
     SharedMemorySumReductionKernel<<<dimGrid, dimBlock>>>(input_d, output_d);
+    
+    cudaDeviceSynchronize();
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+    printf("Time taken: %f ms\n", milliseconds);
 
     // Check for kernel launch errors
     cudaError_t err3 = cudaGetLastError();
@@ -55,7 +68,7 @@ void SharedMemorySumReduction(float *input_h, float *output_h, int N) {
 }
 
 int main() {
-    int N = 256;
+    int N = 128;
     int size = N * sizeof(float);
     
     float *input_h = (float *)malloc(size);

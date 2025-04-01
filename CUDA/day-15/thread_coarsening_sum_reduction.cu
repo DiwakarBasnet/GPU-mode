@@ -41,13 +41,26 @@ void CoarsenedSumReduction(float *input_h, float *output_h, int N) {
 	}
 
 	cudaMemcpy(input_d, input_h, size, cudaMemcpyHostToDevice);
-  cudaMemset(output_d, 0 ,sizeof(float));
+	cudaMemset(output_d, 0 ,sizeof(float));
 
 	// Launch kernel
 	dim3 dimBlock(BLOCK_DIM, 1, 1);
 	dim3 dimGrid(1, 1, 1);
 
+	cudaEvent_t start, stop;
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+	cudaEventRecord(start);
+
 	CoarsenedSumReductionKernel<<<dimGrid, dimBlock>>>(input_d, output_d);
+	
+	cudaDeviceSynchronize();
+	cudaEventRecord(stop);
+	cudaEventSynchronize(stop);
+
+	float milliseconds = 0;
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	printf("Time taken: %f ms\n", milliseconds);
 
 	// Check for kernel lauch errors
 	cudaError_t err3 = cudaGetLastError();
@@ -63,7 +76,7 @@ void CoarsenedSumReduction(float *input_h, float *output_h, int N) {
 }
 
 int main() {
-	int N = 256;
+	int N = 128;
 	int size = N * sizeof(float);
 
 	float *input_h = (float *)malloc(size);
