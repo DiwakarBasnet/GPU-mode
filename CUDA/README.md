@@ -66,3 +66,28 @@ python scharr_kernel_test.py
 ### Day-12
 - [x] Layer normalization using shared memory
 - [x] Comparing CUDA implementation with PyTorch 
+
+### Day-13
+- [x] Basic stencil
+- [x] Stencil with shared memory
+- [x] Stencil sweep with register tiling
+- [x] Stencil sweep with thread coarsening
+### Day-14
+- [x] Atomic opertaion
+- [x] Atomic operation privatization
+- [x] Atomic operation privatization with shared memory
+- [x] Contiguous partitioning coarsening
+- [x] Interleaved partitioning coarsening
+- [x] Aggregated text histogram
+
+### Day-15
+- [x] Simple sum reduction
+- [x] Segmented sum reduction
+- [x] Convergent sum reduction
+- [x] Sum reduction using shared memory
+- [x] Sum reduction using thread coarsening
+
+### Day-16
+Today I implemented softmax operation in CUDA
+- [x] Simple softmax
+- [x] Softmax using sum reduction
