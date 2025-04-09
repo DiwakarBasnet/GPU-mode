@@ -3,14 +3,12 @@
 #include <cuda_runtime.h>
 
 __global__ void SimpleSoftmaxKernel(float *input, float *output, int N) {
-    unsigned int t = threadIdx.x;
     unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (idx >= N) return;
 
     // Calculate exponentials for all elements
-    float exp_val = expf(input[idx]);
-    output[idx] = exp_val;
+    output[idx] = expf(input[idx]);
 
     // Wait for all threads to finish exponentiation
     __syncthreads();
