@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 
-#define BLOCK_DIM 16
+#define BLOCK_DIM 8
 
 __global__ void SoftmaxKernel(float *input, float *output, int width, int height) {
 	extern __shared__ float smem[];
@@ -14,44 +14,27 @@ __global__ void SoftmaxKernel(float *input, float *output, int width, int height
 
 	float *input_row = input + row * width;
 	float *output_row = output + row * width;
-	float local_max = -INFINITY;
-	float local_norm = 0.0f;
+	float row_max, row_norm;
 
-	for (int col = 0; col < width; col++) {
-		float x = input_row[col];
-		if (x > local_max) {
-			local_norm *= expf(local_max - x);
-			local_max = x;
-		}
-		local_norm += expf(x - local_max);
-	}
-	__syncthreads();
+	if (tid == 0) {
+			 row_max = -INFINITY;
+			 row_norm = 0.0f;
 
-	smem[tid] = local_max;
-	__syncthreads();
-
-	for (int stride = blockDim.x / 2; stride > 0; stride /= 2) {
-			 if (tid < stride) {
-						smem[tid] = max(smem[tid], smem[tid + stride]);						
+			 for (int col = 0; col < width; col++) {
+						float x = input_row[col];
+						if (x > row_max) {
+								 row_norm *= expf(row_max - x);
+								 row_max = x;
+						}
+						row_norm += expf(x - row_max);
 			 }
-			 __syncthreads();
+			 smem[0] = row_max;
+			 smem[1] = row_norm;
 	}
-
-	float row_max = smem[0];
 	__syncthreads();
 
-	smem[tid] = local_norm;
-	__syncthreads();
-
-	for (int stride = blockDim.x / 2; stride > 0; stride /= 2) {
-			 if (tid < stride) {
-						smem[tid] += smem[tid + stride];
-			 }
-			 __syncthreads();
-	}
-
-	float row_norm = smem[0];
-	__syncthreads();
+	row_max = smem[0];
+	row_norm = smem[1];
 
 	for (int i = tid; i < width; i += blockDim.x) {
 		output_row[i] = expf(input_row[i] - row_max)/row_norm;
@@ -85,7 +68,7 @@ void Softmax(float *input_h, float *output_h, int width, int height) {
 	float ms = 0.0f;
 	cudaEventRecord(start);
 
-	SoftmaxKernel<<<dimGrid, dimBlock, BLOCK_DIM/2>>>(input_d, output_d, width, height);
+	SoftmaxKernel<<<dimGrid, dimBlock, BLOCK_DIM * sizeof(float)>>>(input_d, output_d, width, height);
 
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
@@ -116,8 +99,8 @@ void printMatrix(float *matrix, int height, int width) {
 }
 
 int main() {
-    int height = 16;
-    int width = 16;
+    int height = 8;
+    int width = 8;
     int size = height * width * sizeof(float);
 
     float *input_h = (float *)malloc(size);
