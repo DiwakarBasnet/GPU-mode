@@ -138,13 +138,14 @@ void transposeKey(const float* key, float* keyT) {
 
 int main() {
     size_t qSize = NUM_SAMPLES * FEATURE_DIMENSION * sizeof(float);
+    size_t kTSize = NUM_SAMPLES * FEATURE_DIMENSION * sizeof(float);
     size_t sSize = NUM_SAMPLES * NUM_SAMPLES * sizeof(float);
 
     // Host allocations
     float *hQ = (float*)malloc(qSize);
     float *hK = (float*)malloc(qSize);
     float *hV = (float*)malloc(qSize);
-    float *hKT = (float*)malloc(sSize);
+    float *hKT = (float*)malloc(kTSize);
     float *hScore = (float*)malloc(sSize);
     float *hSoftmax = (float*)malloc(sSize);
     float *hOut = (float*)malloc(qSize);
@@ -166,7 +167,7 @@ int main() {
     // Device allocations
     float *dQ, *dKT, *dV, *dScore, *dSoftmax, *dOut;
     cudaMalloc(&dQ, qSize);
-    cudaMalloc(&dKT, sSize);
+    cudaMalloc(&dKT, kTSize);
     cudaMalloc(&dV, qSize);
     cudaMalloc(&dScore, sSize);
     cudaMalloc(&dSoftmax, sSize);
@@ -174,7 +175,7 @@ int main() {
 
     // Copy to device
     cudaMemcpy(dQ, hQ, qSize, cudaMemcpyHostToDevice);
-    cudaMemcpy(dKT, hKT, sSize, cudaMemcpyHostToDevice);
+    cudaMemcpy(dKT, hKT, kTSize, cudaMemcpyHostToDevice);
     cudaMemcpy(dV, hV, qSize, cudaMemcpyHostToDevice);
 
     // Launch score kernel
