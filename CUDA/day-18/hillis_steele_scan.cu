@@ -1,4 +1,3 @@
-%%cuda
 #include <stdio.h>
 #include <stdlib.h>
 #include <cuda_runtime.h>
@@ -7,48 +6,47 @@
 #define THREADS_PER_BLOCK 4
 #define ELEMS_PER_THREAD (SECTION_SIZE / THREADS_PER_BLOCK)
 
-__global__ void parallel_scan_kernel(float *X, float *Y, int N) {
+__global__ void hillis_steele_scan_kernel(float *X, float *Y, int N) {
 	__shared__ float XY[SECTION_SIZE];
-  
-  const int base = blockIdx.x * SECTION_SIZE;
+	
+	const int base = blockIdx.x * SECTION_SIZE;
 
-  // Load input into shared memory
-  #pragma unroll
-  for (int i = 0; i < ELEMS_PER_THREAD; i++) {
-      int idx = base + i * blockDim.x + threadIdx.x;
-      XY[i * blockDim.x + threadIdx.x] = (idx < N) ? X[idx] : 0.0f;
-  }
-  __syncthreads();
+	// Load input into shared memory
+#pragma unroll
+	for (int i = 0; i < ELEMS_PER_THREAD; i++) {
+		int idx = base + i * blockDim.x + threadIdx.x;
+		XY[i * blockDim.x + threadIdx.x] = (idx < N) ? X[idx] : 0.0f;
+	}
+	__syncthreads();
 
-  // Inclusive scan using Hillis-Steele
-  for (int offset = 1; offset < SECTION_SIZE; offset <<= 1) {
-      float tmp[ELEMS_PER_THREAD];
+	for (int offset = 1; offset < SECTION_SIZE; offset <<= 1) {
+		float tmp[ELEMS_PER_THREAD];
 
-      #pragma unroll
-      for (int i = 0; i < ELEMS_PER_THREAD; i++) {
-          int pos = i * blockDim.x + threadIdx.x;
-          tmp[i] = (pos >= offset) ? XY[pos - offset] : 0.0f;
-      }
-      __syncthreads();
+#pragma unroll
+		for (int i = 0; i < ELEMS_PER_THREAD; i++) {
+			int pos = i * blockDim.x + threadIdx.x;
+			tmp[i] = (pos >= offset) ? XY[pos - offset] : 0.0f;
+		}
+		__syncthreads();
 
-      #pragma unroll
-      for (int i = 0; i < ELEMS_PER_THREAD; i++) {
-          int pos = i * blockDim.x + threadIdx.x;
-          XY[pos] += tmp[i];
-      }
-      __syncthreads();
-  }
+#pragma unroll
+		for (int i = 0; i < ELEMS_PER_THREAD; i++) {
+			int pos = i * blockDim.x + threadIdx.x;
+			XY[pos] += tmp[i];
+		}
+		__syncthreads();
+	}
 
-	#pragma unroll
-  for (int i = 0; i < ELEMS_PER_THREAD; i++) {
-      int idx = base + i * blockDim.x + threadIdx.x;
-      if (idx < N) {
-          Y[idx] =  XY[i * blockDim.x + threadIdx.x];
-      }
-  }
+#pragma unroll
+	for (int i = 0; i < ELEMS_PER_THREAD; i++) {
+		int idx = base + i * blockDim.x + threadIdx.x;
+		if (idx < N) {
+			Y[idx] =  XY[i * blockDim.x + threadIdx.x];
+		}
+	}
 }
 
-void parallel_scan(float *X_h, float *Y_h, int N) {
+void hillis_steele_scan(float *X_h, float *Y_h, int N) {
 	int size = N * sizeof(float);
 	float *X_d, *Y_d;
 
@@ -69,7 +67,7 @@ void parallel_scan(float *X_h, float *Y_h, int N) {
 	dim3 dimBlock(SECTION_SIZE/4, 1, 1);
 	dim3 dimGrid(1, 1, 1);
 
-	parallel_scan_kernel<<<dimGrid, dimBlock>>>(X_d, Y_d, N);
+	hillis_steele_scan_kernel<<<dimGrid, dimBlock>>>(X_d, Y_d, N);
 
 	// Copy output from device to host
 	cudaMemcpy(Y_h, Y_d, size, cudaMemcpyDeviceToHost);
@@ -93,7 +91,7 @@ int main() {
 		printf("%.2f ", X_h[i]);
 	}
 	
-	parallel_scan(X_h, Y_h, N);
+	hillis_steele_scan(X_h, Y_h, N);
 
 	// Output result
 	printf("\nOutput:\n");
